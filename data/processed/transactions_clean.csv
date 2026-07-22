@@ -1,0 +1,6 @@
+transaction_id,customer_id,amount,payment_method,status,Payment_Result
+T001,C001,500.0,UPI,SUCCESS,Successful
+T002,C002,750.0,Credit Card,FAILED,Failed
+T003,C003,1200.0,Net Banking,SUCCESS,Successful
+T004,C004,625.0,Debit Card,FAILED,Failed
+T005,C005,450.0,UPI,SUCCESS,Successful
