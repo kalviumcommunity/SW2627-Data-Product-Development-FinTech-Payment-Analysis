@@ -1,0 +1,5 @@
+stage,customers,percentage,drop_off_rate,drop_off_count
+initiated,6002,100.0,,
+authenticating,6002,100.0,-0.0,-0.0
+processing,5923,98.68377207597467,1.316227924025326,79.0
+completed,5503,91.6861046317894,7.0910011818335335,420.0

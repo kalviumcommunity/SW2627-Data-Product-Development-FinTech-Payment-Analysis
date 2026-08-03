@@ -1,0 +1,49 @@
+{
+  "worst_date": "2026-04-21",
+  "time_isolation": {
+    "period": "2026-04-21 00:00:00 to 2026-04-21 23:59:59",
+    "normal_mean": 50456.16813294233,
+    "normal_std": 27863.09881612783,
+    "anomaly_mean": 49449.1935483871,
+    "anomaly_median": 50105.0,
+    "change_percent": -1.995741297480313,
+    "records_affected": 31
+  },
+  "segment_isolation": {
+    "Axis Bank": {
+      "mean": 57513.89,
+      "count": 9,
+      "deviation_from_overall": 8064.7
+    },
+    "Bank of Baroda": {
+      "mean": 49672.67,
+      "count": 3,
+      "deviation_from_overall": 223.48
+    },
+    "Canara Bank": {
+      "mean": 48711.67,
+      "count": 6,
+      "deviation_from_overall": -737.52
+    },
+    "HDFC Bank": {
+      "mean": 59002.5,
+      "count": 2,
+      "deviation_from_overall": 9553.31
+    },
+    "ICICI Bank": {
+      "mean": 63188.0,
+      "count": 2,
+      "deviation_from_overall": 13738.81
+    },
+    "IndusInd Bank": {
+      "mean": 45541.5,
+      "count": 4,
+      "deviation_from_overall": -3907.69
+    },
+    "Yes Bank": {
+      "mean": 29493.0,
+      "count": 5,
+      "deviation_from_overall": -19956.19
+    }
+  }
+}

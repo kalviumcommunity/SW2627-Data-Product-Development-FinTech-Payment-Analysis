@@ -1,0 +1,8 @@
+,amount,amount,amount,calculated_fee,calculated_fee,calculated_fee
+,mean,median,std,mean,median,std
+payment_method,,,,,,
+Credit Card,50126.81,50105.0,28157.12,751.9,751.58,422.36
+Debit Card,49851.76,50105.0,28373.96,997.04,1002.1,567.48
+Net Banking,49463.16,50105.0,27861.78,1236.58,1252.62,696.54
+UPI,50775.84,50105.0,27544.03,507.76,501.05,275.44
+Wallet,49355.31,50105.0,28008.84,1480.66,1503.15,840.27

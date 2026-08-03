@@ -43,7 +43,7 @@ def impute_mean_median(df, numerical_cols, strategy='median'):
         if nulls > 0:
             fill_value = df_imputed[col].median() if strategy == 'median' else df_imputed[col].mean()
             df_imputed[col] = df_imputed[col].fillna(fill_value)
-            print(f"  ✓ {col}: filled {nulls} nulls with {strategy} ({fill_value:.2f})")
+            print(f"  [OK] {col}: filled {nulls} nulls with {strategy} ({fill_value:.2f})")
     return df_imputed
 
 
@@ -63,7 +63,7 @@ def impute_mode(df, categorical_cols):
                 print(f"  ! {col}: unable to determine mode, skipping")
                 continue
             df_imputed[col] = df_imputed[col].fillna(mode_val)
-            print(f"  ✓ {col}: filled {nulls} nulls with mode '{mode_val}'")
+            print(f"  [OK] {col}: filled {nulls} nulls with mode '{mode_val}'")
     return df_imputed
 
 
@@ -76,7 +76,7 @@ def impute_forward_fill(df, time_series_cols):
         nulls = df_imputed[col].isnull().sum()
         if nulls > 0:
             df_imputed[col] = df_imputed[col].ffill()
-            print(f"  ✓ {col}: forward-filled {nulls} nulls")
+            print(f"  [OK] {col}: forward-filled {nulls} nulls")
     return df_imputed
 
 
@@ -85,7 +85,7 @@ def drop_rows_with_nulls(df, critical_cols):
     rows_before = len(df)
     df_imputed = df.dropna(subset=[c for c in critical_cols if c in df.columns])
     rows_dropped = rows_before - len(df_imputed)
-    print(f"  ✓ Dropped {rows_dropped} rows with null in: {critical_cols}")
+    print(f"  [OK] Dropped {rows_dropped} rows with null in: {critical_cols}")
     return df_imputed
 
 
@@ -179,7 +179,7 @@ def document_imputation_decisions(df_original, df_imputed, out_path='output/impu
     with open(out_path, 'w') as f:
         json.dump(summary, f, indent=2, default=str)
 
-    print(f"  ✓ Imputation decisions written to {out_path}")
+    print(f"  [OK] Imputation decisions written to {out_path}")
     return summary
 
 
@@ -291,4 +291,4 @@ if __name__ == "__main__":
 
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     df_imputed.to_csv(dst, index=False)
-    print(f"\n✓ Cleaned data saved to {dst}")
+    print(f"\n[OK] Cleaned data saved to {dst}")

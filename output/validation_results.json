@@ -1,0 +1,38 @@
+{
+  "ranges": {
+    "amount": {
+      "out_of_range": "0",
+      "percentage": 0.0,
+      "valid": "True"
+    },
+    "retry_count": {
+      "out_of_range": "0",
+      "percentage": 0.0,
+      "valid": "True"
+    },
+    "revenue_lost": {
+      "out_of_range": "0",
+      "percentage": 0.0,
+      "valid": "True"
+    }
+  },
+  "nulls": {
+    "transaction_id": {
+      "null_percentage": 0.0,
+      "valid": "True"
+    },
+    "customer_id": {
+      "null_percentage": 0.0,
+      "valid": "True"
+    },
+    "amount": {
+      "null_percentage": 0.0,
+      "valid": "True"
+    }
+  },
+  "relationships": {
+    "revenue_lost <= amount": {
+      "error": "'= amount'"
+    }
+  }
+}
