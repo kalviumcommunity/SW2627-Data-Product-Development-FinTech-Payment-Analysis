@@ -1,0 +1,1 @@
+Transaction_ID,Customer_ID,Amount,Payment_Method,Bank_Name,Response_Code,Response_Message,Retry_Count,Transaction_Time,Retry_Time,Final_Status,Failure_Type,Revenue_Lost,Day_of_Week,Hour,Month,Week_Number,Year,Retry_Delay_Minutes,Days_Since_Transaction,Amount_Is_Outlier,Retry_Count_Is_Outlier,Revenue_Lost_Is_Outlier,passes_all_checks

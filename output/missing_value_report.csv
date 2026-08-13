@@ -1,0 +1,14 @@
+column,null_count,null_percentage,data_type,null_meaning
+Transaction_ID,0,0.0,object,
+Customer_ID,0,0.0,object,
+Amount,815,8.15,float64,Missing financial amount
+Payment_Method,519,5.19,object,
+Bank_Name,1433,14.33,object,Failed before reaching banking routing gateway
+Response_Code,725,7.25,float64,Processor did not return numerical code
+Response_Message,833,8.33,object,Processor did not return text response
+Retry_Count,471,4.71,float64,
+Transaction_Time,0,0.0,object,
+Retry_Time,3578,35.78,object,No retry occurred for successful transactions
+Final_Status,939,9.39,object,
+Failure_Type,9035,90.35,object,"Not a failure, or missing classification"
+Revenue_Lost,0,0.0,int64,

@@ -1,116 +1,89 @@
 {
-  "rows_before": 10000,
-  "rows_after": 10000,
-  "total_nulls_before": 18348,
-  "total_nulls_after": 0,
-  "columns": {
-    "Amount": {
-      "column_type": "float64",
-      "null_count_before": 815,
-      "null_pct_before": 8.15,
-      "null_count_after": 0,
-      "null_pct_after": 0.0,
-      "strategy": "median",
-      "value_used": 50105.0,
-      "business_reasoning": "Median used for numerical robustness to outliers.",
-      "risk_assessment": "Low-to-Medium - creates synthetic numeric values.",
-      "over_imputation": false
+    "rows_before": 10000,
+    "total_nulls_before": 18348,
+    "columns": {
+        "Amount": {
+            "column_type": "float64",
+            "null_count_before": 815,
+            "null_pct_before": 8.15,
+            "strategy": "median",
+            "value_used": 50105.0,
+            "risk_assessment": "Low risk; amount distribution is preserved",
+            "over_imputation": false
+        },
+        "Retry_Count": {
+            "column_type": "float64",
+            "null_count_before": 471,
+            "null_pct_before": 4.71,
+            "strategy": "median",
+            "value_used": 2.0,
+            "risk_assessment": "Low risk; retry counts cluster around 0-4",
+            "over_imputation": false
+        },
+        "Response_Code": {
+            "column_type": "float64",
+            "null_count_before": 725,
+            "null_pct_before": 7.249999999999999,
+            "strategy": "median",
+            "value_used": 54.0,
+            "risk_assessment": "Medium risk; response codes are technically categorical, but numerical median represents a typical failure state",
+            "over_imputation": false
+        },
+        "Payment_Method": {
+            "column_type": "object",
+            "null_count_before": 519,
+            "null_pct_before": 5.19,
+            "strategy": "mode",
+            "value_used": "Credit Card",
+            "risk_assessment": "Low risk; assigned most common channel",
+            "over_imputation": false
+        },
+        "Bank_Name": {
+            "column_type": "object",
+            "null_count_before": 1433,
+            "null_pct_before": 14.330000000000002,
+            "strategy": "mode",
+            "value_used": "Axis",
+            "risk_assessment": "Medium risk; could obscure banking pipeline failures if overimputed",
+            "over_imputation": false
+        },
+        "Response_Message": {
+            "column_type": "object",
+            "null_count_before": 833,
+            "null_pct_before": 8.33,
+            "strategy": "mode",
+            "value_used": "Approved",
+            "risk_assessment": "Low risk",
+            "over_imputation": false
+        },
+        "Final_Status": {
+            "column_type": "object",
+            "null_count_before": 939,
+            "null_pct_before": 9.39,
+            "strategy": "mode",
+            "value_used": "Success",
+            "risk_assessment": "Low risk",
+            "over_imputation": false
+        },
+        "Failure_Type": {
+            "column_type": "object",
+            "null_count_before": 9035,
+            "null_pct_before": 90.35,
+            "strategy": "contextual (success -> 'No Failure'; else failure mode)",
+            "value_used": "Permanent",
+            "risk_assessment": "Low risk; prevents misclassifying success transactions as failures",
+            "over_imputation": false
+        },
+        "Retry_Time": {
+            "column_type": "object",
+            "null_count_before": 3578,
+            "null_pct_before": 35.78,
+            "strategy": "contextual (Retry_Count > 0 -> Transaction_Time + median delay; else keep null)",
+            "value_used": "Transaction_Time + 30.0m",
+            "risk_assessment": "Low risk; prevents negative retry delays and preserves temporal order",
+            "over_imputation": false
+        }
     },
-    "Payment_Method": {
-      "column_type": "object",
-      "null_count_before": 519,
-      "null_pct_before": 5.19,
-      "null_count_after": 0,
-      "null_pct_after": 0.0,
-      "strategy": "mode",
-      "value_used": "Credit Card",
-      "business_reasoning": "Mode used to preserve categorical distribution.",
-      "risk_assessment": "Low - preserves category proportions.",
-      "over_imputation": false
-    },
-    "Bank_Name": {
-      "column_type": "object",
-      "null_count_before": 1433,
-      "null_pct_before": 14.33,
-      "null_count_after": 0,
-      "null_pct_after": 0.0,
-      "strategy": "mode",
-      "value_used": "Axis",
-      "business_reasoning": "Mode used to preserve categorical distribution.",
-      "risk_assessment": "Low - preserves category proportions.",
-      "over_imputation": false
-    },
-    "Response_Code": {
-      "column_type": "float64",
-      "null_count_before": 725,
-      "null_pct_before": 7.25,
-      "null_count_after": 0,
-      "null_pct_after": 0.0,
-      "strategy": "median",
-      "value_used": 54.0,
-      "business_reasoning": "Median used for numerical robustness to outliers.",
-      "risk_assessment": "Low-to-Medium - creates synthetic numeric values.",
-      "over_imputation": false
-    },
-    "Response_Message": {
-      "column_type": "object",
-      "null_count_before": 833,
-      "null_pct_before": 8.33,
-      "null_count_after": 0,
-      "null_pct_after": 0.0,
-      "strategy": "mode",
-      "value_used": "Approved",
-      "business_reasoning": "Mode used to preserve categorical distribution.",
-      "risk_assessment": "Low - preserves category proportions.",
-      "over_imputation": false
-    },
-    "Retry_Count": {
-      "column_type": "float64",
-      "null_count_before": 471,
-      "null_pct_before": 4.71,
-      "null_count_after": 0,
-      "null_pct_after": 0.0,
-      "strategy": "median",
-      "value_used": 2.0,
-      "business_reasoning": "Median used for numerical robustness to outliers.",
-      "risk_assessment": "Low-to-Medium - creates synthetic numeric values.",
-      "over_imputation": false
-    },
-    "Retry_Time": {
-      "column_type": "object",
-      "null_count_before": 3578,
-      "null_pct_before": 35.78,
-      "null_count_after": 0,
-      "null_pct_after": 0.0,
-      "strategy": "mode",
-      "value_used": "2026-01-05 19:38",
-      "business_reasoning": "Mode used to preserve categorical distribution.",
-      "risk_assessment": "Low - preserves category proportions.",
-      "over_imputation": true
-    },
-    "Final_Status": {
-      "column_type": "object",
-      "null_count_before": 939,
-      "null_pct_before": 9.39,
-      "null_count_after": 0,
-      "null_pct_after": 0.0,
-      "strategy": "mode",
-      "value_used": "Success",
-      "business_reasoning": "Mode used to preserve categorical distribution.",
-      "risk_assessment": "Low - preserves category proportions.",
-      "over_imputation": false
-    },
-    "Failure_Type": {
-      "column_type": "object",
-      "null_count_before": 9035,
-      "null_pct_before": 90.35,
-      "null_count_after": 0,
-      "null_pct_after": 0.0,
-      "strategy": "mode",
-      "value_used": "Permanent",
-      "business_reasoning": "Mode used to preserve categorical distribution.",
-      "risk_assessment": "Low - preserves category proportions.",
-      "over_imputation": true
-    }
-  }
+    "rows_after": 10000,
+    "total_nulls_after": 1944
 }
