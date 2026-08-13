@@ -1,0 +1,14 @@
+column,data_type,row_count,null_count,null_percentage,unique_count,duplicate_count,min_value,max_value
+Transaction_ID,object,10000,0,0.0,10000,0,TXN100000,TXN109999
+Customer_ID,object,10000,0,0.0,6002,3998,C1001,C9998
+Amount,float64,10000,815,8.15,8749,1250,505.0,99980.0
+Payment_Method,object,10000,519,5.19,5,9994,Credit Card,Wallet
+Bank_Name,object,10000,1433,14.33,8,9991,Axis,Yes Bank
+Response_Code,float64,10000,725,7.25,8,9991,0.0,96.0
+Response_Message,object,10000,833,8.33,8,9991,Approved,System Error
+Retry_Count,float64,10000,471,4.71,5,9994,0.0,4.0
+Transaction_Time,object,10000,0,0.0,9901,99,2026-01-01 00:50:00,2026-12-31 23:19:00
+Retry_Time,object,10000,3578,35.78,6385,3614,2026-01-01 01:57:00,2026-12-31 23:54:00
+Final_Status,object,10000,939,9.39,3,9996,Failed,Success
+Failure_Type,object,10000,9035,90.35,3,9996,Permanent,Unknown
+Revenue_Lost,int64,10000,0,0.0,319,9681,0.0,99956.0
