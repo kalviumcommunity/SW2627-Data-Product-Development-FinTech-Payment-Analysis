@@ -1,49 +1,73 @@
 {
-  "rows_before": 6,
-  "rows_after": 4,
-  "total_nulls_before": 8,
+  "rows_before": 10000,
+  "rows_after": 10000,
+  "total_nulls_before": 18348,
   "total_nulls_after": 0,
   "columns": {
-    "email": {
-      "column_type": "str",
-      "null_count_before": 2,
-      "null_pct_before": 33.3333,
+    "Amount": {
+      "column_type": "float64",
+      "null_count_before": 815,
+      "null_pct_before": 8.15,
       "null_count_after": 0,
       "null_pct_after": 0.0,
-      "strategy": "mode",
-      "value_used": "alice@example.com",
-      "business_reasoning": "Mode used to preserve categorical distribution.",
-      "risk_assessment": "Low - preserves category proportions.",
-      "over_imputation": true
+      "strategy": "median",
+      "value_used": 50105.0,
+      "business_reasoning": "Median used for numerical robustness to outliers.",
+      "risk_assessment": "Low-to-Medium - creates synthetic numeric values.",
+      "over_imputation": false
     },
-    "name": {
-      "column_type": "str",
-      "null_count_before": 1,
-      "null_pct_before": 16.6667,
+    "Payment_Method": {
+      "column_type": "object",
+      "null_count_before": 519,
+      "null_pct_before": 5.19,
       "null_count_after": 0,
       "null_pct_after": 0.0,
       "strategy": "mode",
-      "value_used": "Alice",
+      "value_used": "Credit Card",
       "business_reasoning": "Mode used to preserve categorical distribution.",
       "risk_assessment": "Low - preserves category proportions.",
       "over_imputation": false
     },
-    "amount": {
-      "column_type": "str",
-      "null_count_before": 2,
-      "null_pct_before": 33.3333,
+    "Bank_Name": {
+      "column_type": "object",
+      "null_count_before": 1433,
+      "null_pct_before": 14.33,
+      "null_count_after": 0,
+      "null_pct_after": 0.0,
+      "strategy": "mode",
+      "value_used": "Axis",
+      "business_reasoning": "Mode used to preserve categorical distribution.",
+      "risk_assessment": "Low - preserves category proportions.",
+      "over_imputation": false
+    },
+    "Response_Code": {
+      "column_type": "float64",
+      "null_count_before": 725,
+      "null_pct_before": 7.25,
       "null_count_after": 0,
       "null_pct_after": 0.0,
       "strategy": "median",
-      "value_used": 34.25,
+      "value_used": 54.0,
       "business_reasoning": "Median used for numerical robustness to outliers.",
       "risk_assessment": "Low-to-Medium - creates synthetic numeric values.",
-      "over_imputation": true
+      "over_imputation": false
     },
-    "quantity": {
-      "column_type": "str",
-      "null_count_before": 1,
-      "null_pct_before": 16.6667,
+    "Response_Message": {
+      "column_type": "object",
+      "null_count_before": 833,
+      "null_pct_before": 8.33,
+      "null_count_after": 0,
+      "null_pct_after": 0.0,
+      "strategy": "mode",
+      "value_used": "Approved",
+      "business_reasoning": "Mode used to preserve categorical distribution.",
+      "risk_assessment": "Low - preserves category proportions.",
+      "over_imputation": false
+    },
+    "Retry_Count": {
+      "column_type": "float64",
+      "null_count_before": 471,
+      "null_pct_before": 4.71,
       "null_count_after": 0,
       "null_pct_after": 0.0,
       "strategy": "median",
@@ -52,29 +76,41 @@
       "risk_assessment": "Low-to-Medium - creates synthetic numeric values.",
       "over_imputation": false
     },
-    "last_updated": {
-      "column_type": "str",
-      "null_count_before": 1,
-      "null_pct_before": 16.6667,
+    "Retry_Time": {
+      "column_type": "object",
+      "null_count_before": 3578,
+      "null_pct_before": 35.78,
       "null_count_after": 0,
       "null_pct_after": 0.0,
       "strategy": "mode",
-      "value_used": "2026-07-20",
+      "value_used": "2026-01-05 19:38",
+      "business_reasoning": "Mode used to preserve categorical distribution.",
+      "risk_assessment": "Low - preserves category proportions.",
+      "over_imputation": true
+    },
+    "Final_Status": {
+      "column_type": "object",
+      "null_count_before": 939,
+      "null_pct_before": 9.39,
+      "null_count_after": 0,
+      "null_pct_after": 0.0,
+      "strategy": "mode",
+      "value_used": "Success",
       "business_reasoning": "Mode used to preserve categorical distribution.",
       "risk_assessment": "Low - preserves category proportions.",
       "over_imputation": false
     },
-    "category": {
-      "column_type": "str",
-      "null_count_before": 1,
-      "null_pct_before": 16.6667,
+    "Failure_Type": {
+      "column_type": "object",
+      "null_count_before": 9035,
+      "null_pct_before": 90.35,
       "null_count_after": 0,
       "null_pct_after": 0.0,
       "strategy": "mode",
-      "value_used": "groceries",
+      "value_used": "Permanent",
       "business_reasoning": "Mode used to preserve categorical distribution.",
       "risk_assessment": "Low - preserves category proportions.",
-      "over_imputation": false
+      "over_imputation": true
     }
   }
 }
