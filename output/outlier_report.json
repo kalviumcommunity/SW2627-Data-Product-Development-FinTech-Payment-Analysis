@@ -1,0 +1,29 @@
+{
+    "Amount": {
+        "Q1": 25861.0,
+        "Q3": 73218.0,
+        "IQR": 47357.0,
+        "lower_boundary": -45174.5,
+        "upper_boundary": 144253.5,
+        "outlier_count": 0,
+        "outlier_percentage": 0.0
+    },
+    "Retry_Count": {
+        "Q1": 1.0,
+        "Q3": 3.0,
+        "IQR": 2.0,
+        "lower_boundary": -2.0,
+        "upper_boundary": 6.0,
+        "outlier_count": 0,
+        "outlier_percentage": 0.0
+    },
+    "Revenue_Lost": {
+        "Q1": 0.0,
+        "Q3": 0.0,
+        "IQR": 0.0,
+        "lower_boundary": 0.0,
+        "upper_boundary": 0.0,
+        "outlier_count": 318,
+        "outlier_percentage": 3.18
+    }
+}

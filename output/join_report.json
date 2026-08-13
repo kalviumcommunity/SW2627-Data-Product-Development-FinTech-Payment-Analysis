@@ -1,0 +1,11 @@
+{
+    "transactions_rows": 10000,
+    "customers_rows": 10,
+    "inner_join_rows": 0,
+    "left_join_rows": 10000,
+    "right_join_rows": 10,
+    "outer_join_rows": 10010,
+    "transactions_unmatched_count": 10000,
+    "customers_unmatched_count": 10,
+    "business_rationale": "A left join preserves all customers while adding transaction information where available."
+}

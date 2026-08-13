@@ -1,0 +1,16 @@
+{
+    "total_records": 10000,
+    "passed": 10000,
+    "failed": 0,
+    "pass_percentage": 100.0,
+    "failure_percentage": 0.0,
+    "failed_records_by_rule": {
+        "rule_amount": 0,
+        "rule_customer_id": 0,
+        "rule_retry_count": 0,
+        "rule_retry_time": 0,
+        "rule_final_status": 0,
+        "rule_revenue_lost": 0,
+        "rule_response_code": 0
+    }
+}

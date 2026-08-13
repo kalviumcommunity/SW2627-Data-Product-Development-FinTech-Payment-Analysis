@@ -1,182 +1,114 @@
+#!/usr/bin/env encoding=utf-8
+"""
+scripts/datetime_feature_engineering.py
+Module 2.22 — Date & Time Transformation
+
+This script converts transaction timestamps, extracts calendar features, 
+calculates retry delay durations, and exports time-series analysis summaries.
+"""
+
 import os
+import sys
 import pandas as pd
 
-# =====================================================
-# Load Dataset
-# =====================================================
+# Reconfigure stdout to support UTF-8 on Windows environments
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
-file_path = "data/processed/datatype_validated.csv"
+def main():
+    if len(sys.argv) < 3:
+        input_path = "data/processed/4_string_cleaned.csv"
+        output_path = "data/processed/5_datetime_engineered.csv"
+    else:
+        input_path = sys.argv[1]
+        output_path = sys.argv[2]
+        
+    if not os.path.exists(input_path):
+        print(f"[ERROR] Input file {input_path} does not exist.")
+        sys.exit(1)
+        
+    df = pd.read_csv(input_path)
+    
+    print("======================================================================")
+    print("DATE & TIME TRANSFORMATION PIPELINE")
+    print("======================================================================")
+    
+    # 1. Parse dates safely
+    date_cols = ["Transaction_Time", "Retry_Time"]
+    for col in date_cols:
+        if col in df.columns:
+            # Report invalid timestamps before parsing
+            raw_series = df[col].astype(str)
+            # Safe conversion
+            parsed = pd.to_datetime(df[col], errors="coerce")
+            
+            valid_count = parsed.notna().sum()
+            invalid_count = parsed.isna().sum() - df[col].isnull().sum() # Invalid but not originally missing
+            
+            print(f"Parsing {col}:")
+            print(f"  - Valid timestamps:   {valid_count}")
+            print(f"  - Invalid format:     {invalid_count}")
+            print(f"  - Missing/Null values: {df[col].isnull().sum()}")
+            
+            df[col] = parsed
 
-if not os.path.exists(file_path):
-    print("File not found:", file_path)
-    exit()
+    # 2. Handle missing Transaction_Time
+    rows_before = len(df)
+    # Drop rows where Transaction_Time is missing
+    df = df.dropna(subset=["Transaction_Time"])
+    rows_removed = rows_before - len(df)
+    if rows_removed > 0:
+        print(f"\n[WARNING] Removed {rows_removed} rows due to invalid/missing Transaction_Time.")
+    
+    # 3. Extract time features
+    print("\nExtracting Calendar Features...")
+    df["Day_of_Week"] = df["Transaction_Time"].dt.day_name()
+    df["Hour"] = df["Transaction_Time"].dt.hour
+    df["Month"] = df["Transaction_Time"].dt.month_name()
+    df["Week_Number"] = df["Transaction_Time"].dt.isocalendar().week.astype(int)
+    df["Year"] = df["Transaction_Time"].dt.year
+    print("  Calendar dimensions (Day_of_Week, Hour, Month, Week_Number, Year) successfully added.")
 
-df = pd.read_csv(file_path)
+    # 4. Calculate Retry Delay
+    if "Retry_Time" in df.columns:
+        print("\nCalculating Retry Delays (Minutes)...")
+        # Subtract transaction time from retry time
+        delay_delta = df["Retry_Time"] - df["Transaction_Time"]
+        df["Retry_Delay_Minutes"] = delay_delta.dt.total_seconds() / 60
+        # If retry time is before transaction time, it is invalid (handled in validation phase)
+        print(f"  Retry delay computed for {df['Retry_Delay_Minutes'].notna().sum()} records.")
+        
+    # 5. Days since transaction
+    print("\nCalculating Recency (Days)...")
+    # Base recency calculation on maximum transaction time in dataset + 1 day to represent a stable benchmark
+    max_date = df["Transaction_Time"].max()
+    benchmark_date = max_date + pd.Timedelta(days=1)
+    df["Days_Since_Transaction"] = (benchmark_date - df["Transaction_Time"]).dt.days
+    print(f"  Recency benchmark date used: {benchmark_date}")
+    
+    # 6. Time series summary aggregates
+    print("\n" + "-" * 50)
+    print("TIME-SERIES SUMMARY STATISTICS:")
+    print("-" * 50)
+    
+    # Hourly volume
+    print("\nHourly Transaction Count:")
+    hourly_volume = df.groupby("Hour").size()
+    print(hourly_volume.head(5).to_string())
+    print("...")
+    
+    # Revenue by Day
+    if "Amount" in df.columns:
+        print("\nRevenue Volume by Day of Week:")
+        rev_by_day = df.groupby("Day_of_Week")["Amount"].sum()
+        print(rev_by_day.to_string())
+        
+    print("======================================================================")
 
-print("=" * 70)
-print("DATE & TIME TRANSFORMATION PIPELINE")
-print("=" * 70)
+    # Save output
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    df.to_csv(output_path, index=False)
+    print(f"[OK] Datetime engineered dataset saved to {output_path}")
 
-# =====================================================
-# Parse Date Columns
-# =====================================================
-
-date_columns = ["Transaction_Time", "Retry_Time"]
-
-for col in date_columns:
-    if col in df.columns:
-        print(f"\nParsing {col}...")
-
-        # Automatically detect the format
-        df[col] = pd.to_datetime(df[col], errors="coerce")
-
-        print(f"Valid Dates : {df[col].notna().sum()}")
-        print(f"Invalid Dates : {df[col].isna().sum()}")
-
-print("\nData Types")
-print(df[date_columns].dtypes)
-
-# Remove rows where Transaction_Time is invalid
-rows_before = len(df)
-
-df = df.dropna(subset=["Transaction_Time"])
-
-rows_after = len(df)
-
-print(f"\nRows Before : {rows_before}")
-print(f"Rows After  : {rows_after}")
-print(f"Rows Removed: {rows_before - rows_after}")
-
-# =====================================================
-# Feature Engineering
-# =====================================================
-
-print("\nExtracting Date Features...")
-
-df["Day_of_Week"] = df["Transaction_Time"].dt.day_name()
-df["Hour"] = df["Transaction_Time"].dt.hour
-df["Month"] = df["Transaction_Time"].dt.month_name()
-df["Week_Number"] = df["Transaction_Time"].dt.isocalendar().week
-df["Year"] = df["Transaction_Time"].dt.year
-
-print("Done.")
-
-# =====================================================
-# Retry Delay
-# =====================================================
-
-if "Retry_Time" in df.columns:
-
-    df["Retry_Delay_Minutes"] = (
-        df["Retry_Time"] -
-        df["Transaction_Time"]
-    ).dt.total_seconds() / 60
-
-print("Retry Delay Created.")
-
-# =====================================================
-# Days Since Transaction
-# =====================================================
-
-today = pd.Timestamp.now()
-
-df["Days_Since_Transaction"] = (
-    today -
-    df["Transaction_Time"]
-).dt.days
-
-print("Days Since Transaction Created.")
-
-# =====================================================
-# Hourly Volume
-# =====================================================
-
-print("\nHourly Transaction Volume")
-
-hourly = df.groupby("Hour").size()
-
-print(hourly)
-
-# =====================================================
-# Revenue By Day
-# =====================================================
-
-if "Amount" in df.columns:
-
-    print("\nRevenue by Day")
-
-    revenue_day = df.groupby("Day_of_Week")["Amount"].sum()
-
-    print(revenue_day)
-
-# =====================================================
-# Weekly Revenue
-# =====================================================
-
-if "Amount" in df.columns:
-
-    print("\nWeekly Revenue")
-
-    weekly = (
-        df
-        .set_index("Transaction_Time")
-        .resample("W")["Amount"]
-        .sum()
-    )
-
-    print(weekly)
-
-# =====================================================
-# Payment Method Analysis
-# =====================================================
-
-if "Payment_Method" in df.columns:
-
-    print("\nPayment Method Analysis")
-
-    payment = df.groupby("Payment_Method")["Amount"].agg(
-        ["count", "sum", "mean"]
-    )
-
-    print(payment)
-
-# =====================================================
-# Failure Analysis
-# =====================================================
-
-if "Failure_Type" in df.columns:
-
-    print("\nFailure Types")
-
-    print(df["Failure_Type"].value_counts())
-
-# =====================================================
-# Peak Window
-# =====================================================
-
-if "Amount" in df.columns:
-
-    print("\nHour × Day Revenue")
-
-    pivot = pd.pivot_table(
-        df,
-        values="Amount",
-        index="Hour",
-        columns="Day_of_Week",
-        aggfunc="sum"
-    )
-
-    print(pivot)
-
-# =====================================================
-# Save
-# =====================================================
-
-output = "data/processed/datetime_feature_engineered.csv"
-
-df.to_csv(output, index=False)
-
-print("\n" + "=" * 70)
-print("PIPELINE COMPLETED SUCCESSFULLY")
-print("=" * 70)
-print("Saved to:", output)
+if __name__ == "__main__":
+    main()

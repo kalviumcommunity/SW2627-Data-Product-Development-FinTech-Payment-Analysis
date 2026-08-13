@@ -1,0 +1,79 @@
+{
+    "Transaction_Value_Tier": {
+        "null_count": 0,
+        "min_value": "High",
+        "max_value": "Medium",
+        "value_distribution": {
+            "High": 5421,
+            "Medium": 3638,
+            "Low": 941
+        }
+    },
+    "Retry_Intensity": {
+        "null_count": 0,
+        "min_value": "High Retry",
+        "max_value": "No Retry",
+        "value_distribution": {
+            "Low Retry": 4224,
+            "High Retry": 3832,
+            "No Retry": 1944
+        }
+    },
+    "Retry_Recovery_Status": {
+        "null_count": 0,
+        "min_value": "Failed After Retry",
+        "max_value": "Recovered After Retry",
+        "value_distribution": {
+            "Recovered After Retry": 6962,
+            "No Retry": 1944,
+            "Failed After Retry": 851,
+            "Other Status": 243
+        }
+    },
+    "Revenue_Status": {
+        "null_count": 0,
+        "min_value": "No Revenue Loss",
+        "max_value": "Revenue Lost",
+        "value_distribution": {
+            "No Revenue Loss": 9682,
+            "Revenue Lost": 318
+        }
+    },
+    "Payment_Friction_Category": {
+        "null_count": 0,
+        "min_value": "High Friction",
+        "max_value": "Medium Friction",
+        "value_distribution": {
+            "Medium Friction": 7267,
+            "Low Friction": 1643,
+            "High Friction": 1090
+        }
+    },
+    "Retry_Delay_Category": {
+        "null_count": 0,
+        "min_value": "Long Delay",
+        "max_value": "Short Delay",
+        "value_distribution": {
+            "Long Delay": 4874,
+            "Medium Delay": 2202,
+            "No Retry": 1944,
+            "Short Delay": 980
+        }
+    },
+    "Risk_Score": {
+        "null_count": 0,
+        "min_value": 0.0,
+        "max_value": 90.0,
+        "value_distribution": {
+            "10.0": 3787,
+            "20.0": 3418,
+            "0.0": 1705,
+            "55.0": 318,
+            "65.0": 287,
+            "45.0": 167,
+            "90.0": 127,
+            "80.0": 119,
+            "70.0": 72
+        }
+    }
+}

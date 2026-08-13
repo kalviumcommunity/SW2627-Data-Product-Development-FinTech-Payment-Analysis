@@ -1,257 +1,160 @@
-# 💳 FinTech Payment Analytics Dashboard
+# 💳 Fintech Payment Analysis — Payment Retry, Failure & Revenue Loss Analytics
 
-An end-to-end **Data Analytics Product** that helps finance teams analyze payment transactions, identify temporary payment failures, detect permanently lost revenue, and generate actionable business insights through an interactive dashboard.
-
----
-
-## 📌 Project Overview
-
-FinTech platforms process thousands of digital payment transactions every day. Payment retries, bank response codes, and transaction timestamps are often stored separately, making it difficult for finance teams to understand whether a failed payment was eventually recovered or resulted in permanent revenue loss.
-
-This project integrates multiple datasets, cleans and transforms the data, calculates business KPIs, and visualizes insights using an interactive **Streamlit Dashboard**.
+An end-to-end data engineering and analytics pipeline built for Fintech payment processing. This project helps finance and operations teams distinguish between temporary payment friction (payments that succeed after retrying) and permanently lost revenue from failed transactions.
 
 ---
 
-## 🎯 Problem Statement
+## 🎯 Business Problem
 
-Finance teams cannot easily distinguish between:
+Fintech platforms process thousands of digital transactions daily. Payment retries, gateway error codes, and timestamps are often stored separately, causing the following issues:
+* Finance teams cannot distinguish temporary transaction friction from permanent revenue leakage.
+* There is no visibility into which acquiring banks or payment channels experience the highest failure rates.
+* Calculating operational metrics such as retry delay, recovery rates, and transaction value tiers is difficult.
 
-* Temporary payment friction (payments that succeed after retries)
-* Permanently lost revenue (payments that never succeed)
-
-Without a unified analytics platform, organizations struggle to measure revenue loss, analyze payment failures, and improve payment recovery strategies.
-
----
-
-## 🚀 Features
-
-* Upload payment datasets (CSV)
-* Data validation and preprocessing
-* Missing value handling
-* Duplicate removal
-* Feature engineering
-* SQL-based business analytics
-* KPI calculation
-* Interactive Plotly visualizations
-* Payment failure classification
-* Revenue recovery analysis
-* Downloadable reports
-
----
-
-## 🛠️ Tech Stack
-
-| Category             | Technology         |
-| -------------------- | ------------------ |
-| Programming Language | Python             |
-| Data Processing      | Pandas, NumPy      |
-| Database             | PostgreSQL         |
-| Query Language       | SQL                |
-| Dashboard            | Streamlit          |
-| Visualization        | Plotly             |
-| Version Control      | Git & GitHub       |
-| IDE                  | Visual Studio Code |
+This project delivers a 14-stage data engineering preprocessing pipeline to ingest, clean, validate, and enrich transaction logs. The resulting analysis-ready dataset allows stakeholders to segment customers, audit quality gates, and query business insights.
 
 ---
 
 ## 📂 Project Structure
 
 ```text
-FinTech-Payment-Analytics/
+Fintech/
 │
 ├── data/
 │   ├── raw/
+│   │   ├── missing_data.csv        # Baseline missing data check
+│   │   ├── customers.csv           # Customer profiles database
+│   │   ├── transactions.csv        # Raw payment transaction logs
+│   │   └── sample.json             # Raw transactions JSON preview
+│   │
 │   └── processed/
+│       └── final_fintech_dataset.csv # Cleaned & enriched target dataset
 │
-├── notebooks/
+├── output/
+│   ├── intake_validation_report.json  # File structure validation metadata
+│   ├── dataset_profile.csv           # Baseline numerical/categorical counts
+│   ├── data_dictionary.csv            # Structured data field business mapping
+│   ├── missing_value_report.csv       # Analysis of null counts and percentages
+│   ├── duplicate_report.json          # Row-level and primary key duplicates
+│   ├── validation_failures.csv        # Extracted records violating business rules
+│   ├── validation_report.json         # Checkpoint summary of rule violations
+│   ├── unmatched_customers.csv        # Customers with zero logged transactions
+│   ├── unmatched_transactions.csv     # Transactions lacking a customer profile
+│   ├── join_report.json               # Merge overlap statistics
+│   ├── feature_validation_report.json # Derived columns profiling analysis
+│   └── final_data_quality_report.json # Overall pipeline metrics & business KPIs
 │
-├── src/
-│   ├── data_loader.py
-│   ├── cleaning.py
-│   ├── feature_engineering.py
-│   ├── analytics.py
-│   └── visualization.py
+├── scripts/
+│   ├── dataset_intake_validation.py  # Module 2.14: Pre-ingestion validation
+│   ├── data_ingestion.py              # Module 2.15: CSV and JSON reader utilities
+│   ├── dataset_profiling.py           # Module 2.16: Pre-cleaning data profiler
+│   ├── data_dictionary.py             # Module 2.17: Business context mapper
+│   ├── handle_missing.py              # Module 2.18: Contextual missing value handler
+│   ├── handle_duplicates.py           # Module 2.20: Deduplication script
+│   ├── string_cleaning.py             # Module 2.21: Text normalisation engine
+│   ├── datetime_feature_engineering.py# Module 2.22: Date features & intervals
+│   ├── outlier_detection.py           # Module 2.23: Outlier bounds & flagger
+│   ├── data_validation.py             # Module 2.24: Rule consistency checks
+│   ├── merge_validation.py            # Module 2.25: Multi-source join validation
+│   ├── feature_engineering.py         # Module 2.26: Business features generator
+│   └── run_pipeline.py                # Pipeline orchestrator
 │
-├── database/
-│   └── schema.sql
-│
-├── reports/
-├── assets/
-│
-├── app.py
-├── requirements.txt
-├── README.md
-├── .gitignore
-└── .env.example
+├── requirements.txt                   # Project package dependencies
+├── README.md                          # Project documentation
+└── .gitignore                         # Git exclusion rules
 ```
 
 ---
 
-## ⚙️ Installation
+## ⚙️ Installation & Setup (Windows PowerShell)
+
+Follow these steps to set up the environment and run the pipeline locally:
 
 ### 1. Clone the repository
-
-```bash
-git clone https://github.com/your-username/FinTech-Payment-Analytics.git
-cd FinTech-Payment-Analytics
+```powershell
+git clone https://github.com/kalviumcommunity/SW2627-Data-Product-Development-FinTech-Payment-Analysis.git
+cd SW2627-Data-Product-Development-FinTech-Payment-Analysis
 ```
 
-### 2. Create a virtual environment
-
-**Windows**
-
-```bash
+### 2. Set up Virtual Environment
+```powershell
 python -m venv venv
-venv\Scripts\activate
+.\venv\Scripts\activate
 ```
 
-**macOS/Linux**
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```bash
+### 3. Install Dependencies
+```powershell
 pip install -r requirements.txt
 ```
 
 ---
 
-## ▶️ Run the Application
+## ▶️ Pipeline Execution
 
-```bash
-streamlit run app.py
+Run the complete pipeline from dataset intake validation through feature engineering:
+```powershell
+$env:PYTHONIOENCODING="utf-8"
+python scripts/run_pipeline.py
 ```
-
-The dashboard will open automatically in your browser.
-
----
-
-## 📊 Datasets
-
-### transactions.csv
-
-Contains transaction details.
-
-Columns:
-
-* transaction_id
-* customer_id
-* amount
-* payment_method
-* status
-* transaction_time
-
-### payment_attempts.csv
-
-Contains retry history.
-
-Columns:
-
-* attempt_id
-* transaction_id
-* attempt_number
-* response_code
-* attempt_time
-
-### bank_response_codes.csv
-
-Maps bank response codes to business meaning.
-
-Columns:
-
-* response_code
-* description
-* category
+This orchestrator automatically invokes all 14 stages, prints structured checklists to the console, generates output reports under `output/`, and exports the final file `data/processed/final_fintech_dataset.csv`.
 
 ---
 
-## 📈 Key Performance Indicators (KPIs)
+## 🔍 Preprocessing Modules Breakdown
 
-* Total Transactions
-* Successful Payments
-* Failed Payments
-* Retry Rate
-* Recovery Rate
-* Revenue Recovered
-* Lost Revenue
-* Average Retry Count
-* Top Failure Reasons
-* Bank-wise Failure Rate
+### 1. Dataset Intake & Source Validation (`dataset_intake_validation.py`)
+Validates whether incoming datasets are ready for ingestion. Checks file existence, formats, encoding, parsability, column count, and searches for missing required transaction columns.
 
----
+### 2. Ingestion (`data_ingestion.py`)
+Loads CSV and JSON datasets into Pandas DataFrames. Flattens nested JSON records using `pd.json_normalize()` and runs basic structural checks.
 
-## 📱 Dashboard Modules
+### 3. Dataset Profiling (`dataset_profiling.py`)
+Profiles the raw data before modification, summarizing dataset dimensions, missing percentages, duplicate row counts, and data types.
 
-* Dashboard
-* Transactions
-* Revenue Analytics
-* Failure Analysis
-* Upload Dataset
-* Reports
-* Settings
+### 4. Data Dictionary (`data_dictionary.py`)
+Generates metadata mapping for all 13 transaction fields, defining business roles, expected formats, and key KPI usages.
 
----
+### 5. Missing Value Imputation (`handle_missing.py`)
+Imputes missing fields using context-aware rules:
+*   `Amount` / `Retry_Count` / `Response_Code` → Filled with median values.
+*   `Payment_Method` / `Bank_Name` / `Final_Status` → Filled with mode values.
+*   `Failure_Type` → Infilled with "No Failure" if transaction succeeded.
+*   `Retry_Time` → Kept null if no retry occurred (`Retry_Count` = 0), otherwise infilled with `Transaction_Time` + median retry delay. Prevents negative retry durations.
 
-## 🔄 Workflow
+### 6. Deduplication (`handle_duplicates.py`)
+Identifies and audits exact row duplicates and primary key (`Transaction_ID`) collisions, removing exact duplicate entries.
 
-```text
-Upload Dataset
-        ↓
-Data Validation
-        ↓
-Data Cleaning
-        ↓
-Feature Engineering
-        ↓
-Database (PostgreSQL)
-        ↓
-SQL Analytics
-        ↓
-Plotly Visualizations
-        ↓
-Streamlit Dashboard
-```
+### 7. String Cleaning (`string_cleaning.py`)
+Cleans text spacing, normalizes casing, handles special characters via regex, and maps variable representations (e.g. `credit card` / `credit-card` → `Credit Card`).
 
----
+### 8. Date & Time Transformation (`datetime_feature_engineering.py`)
+Parses transaction timestamps, extracts calendar indicators (Hour, Day, Month, Week), and calculates `Retry_Delay_Minutes` and transaction recency.
 
-## 👥 Team Members
+### 9. Outlier Detection (`outlier_detection.py`)
+Computes Q1, Q3, and IQR boundaries to identify outliers in amounts and retries. Rather than deleting financial transactions, it adds logical outlier flags.
 
-| Name     | Responsibility                               |
-| -------- | -------------------------------------------- |
-| Member 1 | Data Cleaning & Feature Engineering          |
-| Member 2 | Database Design & SQL Analytics              |
-| Member 3 | Dashboard Development, UI/UX & Documentation |
+### 10. Data Consistency Validation (`data_validation.py`)
+Enforces 7 transaction rules (e.g. positive amounts, chronological retry order, status category checks), isolating violations to [`validation_failures.csv`](file:///c:/Users/saray/OneDrive/Desktop/Fintech/output/validation_failures.csv).
+
+### 11. Multi-Source Merging (`merge_validation.py`)
+Joins validated transaction records with the Customer Master (`customers.csv`). Audits cardinality and isolates unmatched records to unmatched CSV files.
+
+### 12. Feature Engineering (`feature_engineering.py`)
+Derives 7 business-relevant columns:
+*   `Transaction_Value_Tier` (Low, Medium, High)
+*   `Retry_Intensity` (No, Low, High Retry)
+*   `Retry_Recovery_Status` (No Retry, Recovered, Failed after retry)
+*   `Revenue_Status` (No Loss vs Revenue Lost)
+*   `Payment_Friction_Category` (Low, Medium, High Friction)
+*   `Retry_Delay_Category` (Short, Medium, Long Delay)
+*   `Risk_Score` (Weighted calculation based on failure, retry intensity, and leakage)
 
 ---
 
-## 🌟 Future Enhancements
-
-* Machine Learning for payment failure prediction
-* Fraud detection
-* Real-time payment monitoring
-* Email notifications
-* Cloud deployment (AWS/Azure)
-* REST API integration
-* Role-based authentication
-
----
-
-## 📄 License
-
-This project is developed for academic purposes as part of the **Kalvium End-to-End Data Product** course.
-
----
-
-## 🙏 Acknowledgements
-
-* Kalvium
-* Streamlit
-* Plotly
-* Pandas
-* NumPy
-* PostgreSQL
-* Open Source Community
+## 📈 Key Performance Indicators (KPIs) Computed
+*   **Payment Success Rate:** Transactions ending in 'Success' / Total transactions.
+*   **Failure Rate:** Transactions ending in 'Failed' / Total transactions.
+*   **Retry Rate:** Transactions containing at least one retry attempt / Total transactions.
+*   **Retry Recovery Rate:** Failed payments successfully resolved on subsequent retries.
+*   **Revenue Lost:** Total transaction value representing permanently lost revenue.
+*   **Average Retry Delay:** Average time duration elapsed between initial failure and retry.

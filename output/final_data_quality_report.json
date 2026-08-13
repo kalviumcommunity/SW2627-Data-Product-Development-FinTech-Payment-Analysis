@@ -1,0 +1,48 @@
+{
+    "dataset_size": 10000,
+    "missing_values_before_cleaning": 18348,
+    "missing_values_after_cleaning": 23888,
+    "duplicate_count": 0,
+    "invalid_records": 0,
+    "outlier_counts": {
+        "Amount": 0,
+        "Retry_Count": 0,
+        "Revenue_Lost": 318
+    },
+    "join_statistics": {
+        "transactions_rows": 10000,
+        "customers_rows": 10,
+        "inner_join_rows": 0,
+        "left_join_rows": 10000,
+        "right_join_rows": 10,
+        "outer_join_rows": 10010,
+        "transactions_unmatched_count": 10000,
+        "customers_unmatched_count": 10,
+        "business_rationale": "A left join preserves all customers while adding transaction information where available."
+    },
+    "payment_success_rate": 0.8605,
+    "payment_failure_rate": 0.109,
+    "retry_rate": 0.8056,
+    "retry_recovery_rate": 0.8642005958291956,
+    "total_revenue_lost": 15635208.0,
+    "average_transaction_value": 49918.9628,
+    "average_retry_delay": 29.967850049652434,
+    "failure_distribution": {
+        "approved": 221,
+        "card declined": 143,
+        "network error": 135,
+        "response timeout": 133,
+        "insufficient funds": 125,
+        "invalid amount": 120,
+        "expired card": 108,
+        "system error": 105
+    },
+    "bank_failure_distribution": {},
+    "payment_method_failure_distribution": {
+        "Credit Card": 0.1112909753136382,
+        "Debit Card": 0.1130890052356021,
+        "Net Banking": 0.10613086038124678,
+        "UPI": 0.10270568746548868,
+        "Wallet": 0.11087305838243171
+    }
+}
