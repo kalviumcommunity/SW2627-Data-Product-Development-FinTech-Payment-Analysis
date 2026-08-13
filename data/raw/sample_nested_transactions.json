@@ -1,0 +1,44 @@
+[
+  {
+    "Transaction_ID": "TXN100000",
+    "Customer": {
+      "Customer_ID": "C8270"
+    },
+    "Details": {
+      "Amount": 5945.0,
+      "Payment_Method": "Credit Card"
+    },
+    "Bank_Name": "BOB",
+    "Response": {
+      "Code": "68",
+      "Message": "Card Declined"
+    },
+    "Retry_Count": 4.0,
+    "Transaction_Time": "2026-03-09 23:18",
+    "Retry_Time": "2026-03-09 23:27",
+    "Final_Status": "Success",
+    "Failure_Type": null,
+    "Revenue_Lost": 0
+  },
+  {
+    "Transaction_ID": "TXN100001",
+    "Customer": {
+      "Customer_ID": "C1860"
+    },
+    "Details": {
+      "Amount": 64815.0,
+      "Payment_Method": "Credit Card"
+    },
+    "Bank_Name": "IndusInd",
+    "Response": {
+      "Code": "55",
+      "Message": "Invalid Amount"
+    },
+    "Retry_Count": 1.0,
+    "Transaction_Time": "2026-07-21 02:07",
+    "Retry_Time": null,
+    "Final_Status": "Success",
+    "Failure_Type": null,
+    "Revenue_Lost": 0
+  }
+]

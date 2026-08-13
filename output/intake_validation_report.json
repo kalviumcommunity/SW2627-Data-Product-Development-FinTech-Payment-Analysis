@@ -1,0 +1,11 @@
+{
+    "file_name": "sample_10k.csv",
+    "file_exists": true,
+    "file_type": "csv",
+    "encoding": "utf-8",
+    "rows": 10000,
+    "columns": 13,
+    "required_columns_missing": [],
+    "extra_columns": [],
+    "ingestion_ready": true
+}
