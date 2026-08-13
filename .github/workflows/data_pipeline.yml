@@ -1,0 +1,51 @@
+name: Data Pipeline Validation CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Validate Datasets & Run Preprocessing Pipeline
+      env:
+        PYTHONIOENCODING: utf-8
+      run: |
+        # 1. Verify and run intake validation
+        python scripts/dataset_intake_validation.py
+        
+        # 2. Verify and run data ingestion checks
+        python scripts/data_ingestion.py
+        
+        # 3. Run the main processing and profiling workflow
+        python scripts/data_workflow.py
+        
+        # 4. Integrate and validate SQLite database
+        python scripts/db_integration.py
+
+    - name: Verify Generated Outputs
+      run: |
+        # Check that output artifacts exist and are not empty
+        test -s output/intake_validation_report.json
+        test -s output/dataset_profile.csv
+        test -s output/data_dictionary.csv
+        test -s database/fintech_payment.db
+        echo "✓ All data artifacts generated and verified successfully!"

@@ -1,10 +1,24 @@
 import os
 import json
+import sqlite3
 import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as ob
 import streamlit as st
+import subprocess
+import sys
+from datetime import datetime
+
+# Import Plotly visualizations from src
+from src.visualization import (
+    plot_time_series_trend,
+    plot_payment_methods_pie,
+    plot_bank_revenue_bar,
+    plot_cumulative_settlement,
+    plot_funnel_drop_off,
+    plot_revenue_anomalies
+)
 
 # Setup page config
 st.set_page_config(
@@ -13,6 +27,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Reconfigure stdout to support UTF-8 on Windows environments
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 # Custom premium styling via CSS
 st.markdown("""
@@ -96,37 +114,64 @@ st.markdown("""
         background-color: rgba(248, 81, 73, 0.1);
         border-left-color: #f85149;
         color: #f85149;
+        border-top: 1px solid rgba(248, 81, 73, 0.2);
+        border-right: 1px solid rgba(248, 81, 73, 0.2);
+        border-bottom: 1px solid rgba(248, 81, 73, 0.2);
     }
     .alert-banner.warning {
         background-color: rgba(210, 153, 34, 0.1);
         border-left-color: #d29922;
         color: #d29922;
+        border-top: 1px solid rgba(210, 153, 34, 0.2);
+        border-right: 1px solid rgba(210, 153, 34, 0.2);
+        border-bottom: 1px solid rgba(210, 153, 34, 0.2);
     }
     .alert-banner.success {
         background-color: rgba(63, 185, 80, 0.1);
         border-left-color: #3fb950;
         color: #3fb950;
+        border-top: 1px solid rgba(63, 185, 80, 0.2);
+        border-right: 1px solid rgba(63, 185, 80, 0.2);
+        border-bottom: 1px solid rgba(63, 185, 80, 0.2);
+    }
+    .smtp-terminal {
+        background-color: #010409;
+        border: 1px solid #30363d;
+        font-family: monospace;
+        padding: 10px;
+        border-radius: 5px;
+        color: #3fb950;
     }
 </style>
 """, unsafe_allow_html=True)
 
+# Define file paths
+DB_PATH = "database/fintech_payment.db"
+ENRICHED_PATH = "data/processed/enriched_transactions_10k.csv"
+CUSTOMER_SEGMENTS_PATH = "data/processed/customer_segments.csv"
+
+# Automatically verify and build DB if missing (2.37)
+if not os.path.exists(DB_PATH) and os.path.exists(ENRICHED_PATH):
+    try:
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "utf-8"
+        subprocess.run(["python", "scripts/db_integration.py"], check=True, env=env)
+    except Exception as e:
+        st.warning(f"Could not build SQLite database: {e}")
+
 # Helper function to load datasets safely
 @st.cache_data
 def load_data():
-    enriched_path = "data/processed/enriched_transactions_10k.csv"
-    customer_segments_path = "data/processed/customer_segments.csv"
-    
     df_txn = pd.DataFrame()
     df_cust = pd.DataFrame()
     
-    if os.path.exists(enriched_path):
-        df_txn = pd.read_csv(enriched_path)
-        # Parse datetime
+    if os.path.exists(ENRICHED_PATH):
+        df_txn = pd.read_csv(ENRICHED_PATH)
         if 'transaction_time' in df_txn.columns:
             df_txn['transaction_time'] = pd.to_datetime(df_txn['transaction_time'])
     
-    if os.path.exists(customer_segments_path):
-        df_cust = pd.read_csv(customer_segments_path)
+    if os.path.exists(CUSTOMER_SEGMENTS_PATH):
+        df_cust = pd.read_csv(CUSTOMER_SEGMENTS_PATH)
         
     return df_txn, df_cust
 
@@ -146,10 +191,16 @@ root_cause = load_json_report("output/root_cause_findings.json")
 
 # Ensure dataset loaded successfully before drawing
 if df_txn.empty:
-    st.error("Enriched transaction dataset not found. Please run the workflow script `python scripts/data_workflow.py` first to generate data.")
+    st.error("Enriched transaction dataset not found. Please upload a dataset or run the workflow script `python scripts/data_workflow.py` first to generate data.")
     st.stop()
 
-# Sidebar navigation
+# Initialize session state for uploads and console (2.54)
+if 'uploaded_status' not in st.session_state:
+    st.session_state['uploaded_status'] = None
+if 'sql_history' not in st.session_state:
+    st.session_state['sql_history'] = []
+
+# Sidebar navigation (2.51)
 st.sidebar.markdown("<h2 style='text-align: center; color: #58a6ff;'>💳 FinTech Payments</h2>", unsafe_allow_html=True)
 st.sidebar.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
 
@@ -162,14 +213,17 @@ navigation = st.sidebar.radio(
         "👥 Customer Segments & CLV",
         "📉 Drop-off Funnel Analysis",
         "🚨 Risk & Anomaly Investigations",
-        "📖 Transaction Ledger"
+        "📖 Transaction Ledger",
+        "🗄️ SQL Database Analytics",
+        "📤 Data Intake & Ingestion",
+        "📧 Executive Reports & Sharing"
     ]
 )
 
 st.sidebar.markdown("<hr style='margin: 20px 0;'>", unsafe_allow_html=True)
-st.sidebar.info("Course: Kalvium DPD\nTopics: 2.19 - 2.36\nDatabase: PostgreSQL ready")
+st.sidebar.info("Course: Kalvium DPD\nDatabase: SQLite Integrated\nPipeline: Automated Execution")
 
-# Filters (Global sidebar filters where appropriate)
+# Filters (Global sidebar filters where appropriate) (2.53)
 st.sidebar.markdown("### Interactive Filters")
 payment_methods = ['All'] + sorted(df_txn['payment_method'].unique().tolist())
 selected_pm = st.sidebar.selectbox("Filter by Payment Method:", payment_methods)
@@ -197,7 +251,27 @@ if navigation == "📊 Executive KPI Summary":
     success_rate = (df_filtered['final_status'] == 'Success').sum() / len(df_filtered) if len(df_filtered) else 0
     active_customers = df_filtered['customer_id'].nunique()
     
-    # 4 columns of high-fidelity KPI Cards
+    # 2.56: Alert Monitoring & Metric Threshold Detection
+    if success_rate < 0.85:
+        st.markdown(f"""
+        <div class='alert-banner critical'>
+            <strong>🚨 CRITICAL METRIC ALERT:</strong> Transaction Success Rate is at <strong>{success_rate * 100:.2f}%</strong> which is below the target operational threshold of <strong>85.00%</strong>. Investigate Bank Routing tables immediately.
+        </div>
+        """, unsafe_allow_html=True)
+    elif lost_revenue > 10000000.0:
+        st.markdown(f"""
+        <div class='alert-banner warning'>
+            <strong>⚠️ REVENUE LEAKAGE ALERT:</strong> Total permanently lost revenue has crossed threshold at <strong>${lost_revenue:,.2f}</strong>. Failure types classification review recommended.
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div class='alert-banner success'>
+            <strong>✅ OPERATIONAL STATUS NORMAL:</strong> Success rate is healthy at <strong>{success_rate * 100:.2f}%</strong> and revenue leakage is within expected targets.
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 4 columns of high-fidelity KPI Cards (2.47)
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -236,16 +310,16 @@ if navigation == "📊 Executive KPI Summary":
         </div>
         """, unsafe_allow_html=True)
         
-    # KPI Target checks (from json if available)
+    # KPI Target checks (from json if available) (2.34)
     st.markdown("### 🎯 Live KPI Target Framework (Skill 2.34)")
     kpi_file = "output/kpi_dashboard.csv"
     if os.path.exists(kpi_file):
         df_kpi = pd.read_csv(kpi_file)
-        st.table(df_kpi)
+        st.dataframe(df_kpi, use_container_width=True)
     else:
         st.write("KPI Dashboard csv not generated.")
         
-    # Charts: Daily Trend with 7-day Moving Average (Skill 2.31)
+    # Charts: Daily Trend with 7-day Moving Average (Skill 2.31 / 2.46)
     st.markdown("### 📈 Time-Series Performance Trend (Skill 2.31)")
     
     # Calculate daily statistics
@@ -255,41 +329,19 @@ if navigation == "📊 Executive KPI Summary":
     daily_stats = daily_stats.sort_values('date_only')
     daily_stats['rolling_avg_7d'] = daily_stats['daily_total'].rolling(7).mean()
     
-    fig_trend = ob.Figure()
-    fig_trend.add_trace(ob.Scatter(
-        x=daily_stats['date_only'], y=daily_stats['daily_total'],
-        mode='lines', name='Daily Total Volume', line=dict(color='#58a6ff', width=1.5)
-    ))
-    fig_trend.add_trace(ob.Scatter(
-        x=daily_stats['date_only'], y=daily_stats['rolling_avg_7d'],
-        mode='lines', name='7-Day Moving Average', line=dict(color='#ff7b72', width=3, dash='dash')
-    ))
-    fig_trend.update_layout(
-        title="Transaction Volume Daily Trend vs Rolling Average",
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#c9d1d9'),
-        xaxis=dict(showgrid=True, gridcolor='#21262d'),
-        yaxis=dict(showgrid=True, gridcolor='#21262d')
-    )
+    fig_trend = plot_time_series_trend(daily_stats)
     st.plotly_chart(fig_trend, use_container_width=True)
     
     # Sub segment layouts
     col_left, col_right = st.columns(2)
     with col_left:
         st.markdown("#### Payment Methods Popularity & Volume")
-        pm_stats = df_filtered.groupby('payment_method')['amount'].agg(['sum', 'count']).reset_index()
-        fig_pm = px.pie(pm_stats, values='sum', names='payment_method', hole=.4,
-                        color_discrete_sequence=px.colors.sequential.Plotlyfresh)
-        fig_pm.update_layout(paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#c9d1d9'))
+        fig_pm = plot_payment_methods_pie(df_filtered)
         st.plotly_chart(fig_pm, use_container_width=True)
         
     with col_right:
         st.markdown("#### Top Bank Revenue Pipelines (Skill 2.30)")
-        bank_stats = df_filtered.groupby('bank_name')['amount'].sum().reset_index().sort_values('amount', ascending=False)
-        fig_bank = px.bar(bank_stats, x='amount', y='bank_name', orientation='h', color='amount',
-                          color_continuous_scale='Bluered')
-        fig_bank.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#c9d1d9'))
+        fig_bank = plot_bank_revenue_bar(df_filtered)
         st.plotly_chart(fig_bank, use_container_width=True)
 
 
@@ -390,15 +442,16 @@ elif navigation == "💸 Fees & Optimization":
     
     with col_fee:
         st.markdown("#### Processing Fees Disbursed by Bank Segment")
-        fee_by_bank = df_filtered.groupby('bank_name')['calculated_fee'].sum().reset_index().sort_values('calculated_fee', ascending=False)
-        fig_fees = px.bar(fee_by_bank, x='calculated_fee', y='bank_name', orientation='h', color='calculated_fee',
-                          color_continuous_scale='Teal')
+        fig_fees = px.bar(
+            df_filtered.groupby('bank_name')['calculated_fee'].sum().reset_index().sort_values('calculated_fee', ascending=False),
+            x='calculated_fee', y='bank_name', orientation='h', color='calculated_fee',
+            color_continuous_scale='Teal'
+        )
         fig_fees.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#c9d1d9'))
         st.plotly_chart(fig_fees, use_container_width=True)
         
     with col_disc:
         st.markdown("#### Discounts Granted by Customer Segment")
-        # Ensure column exists or fallback to segment
         seg_col = 'customer_customer_segment' if 'customer_customer_segment' in df_filtered.columns else 'payment_method'
         disc_by_seg = df_filtered.groupby(seg_col)['calculated_discount'].sum().reset_index()
         fig_disc = px.bar(disc_by_seg, x=seg_col, y='calculated_discount', color='calculated_discount',
@@ -412,18 +465,7 @@ elif navigation == "💸 Fees & Optimization":
     df_sorted['cumulative_amount'] = df_sorted['amount'].cumsum()
     df_sorted['cumulative_net'] = df_sorted['net_amount'].cumsum() if 'net_amount' in df_sorted.columns else df_sorted['cumulative_amount']
     
-    fig_cum = ob.Figure()
-    fig_cum.add_trace(ob.Scatter(
-        y=df_sorted['cumulative_amount'].values[::100], name='Cumulative Gross Volume', line=dict(color='#ff7b72', width=2)
-    ))
-    fig_cum.add_trace(ob.Scatter(
-        y=df_sorted['cumulative_net'].values[::100], name='Cumulative Net Settled (Post Discounts)', line=dict(color='#58a6ff', width=3)
-    ))
-    fig_cum.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#c9d1d9'),
-        xaxis=dict(title='Transaction sample points (scaled down by 100x)', showgrid=True, gridcolor='#21262d'),
-        yaxis=dict(title='Total Accumulated USD', showgrid=True, gridcolor='#21262d')
-    )
+    fig_cum = plot_cumulative_settlement(df_sorted)
     st.plotly_chart(fig_cum, use_container_width=True)
 
 
@@ -465,7 +507,7 @@ elif navigation == "👥 Customer Segments & CLV":
     # Correlation Map
     st.markdown("### Numerical Attributes Relationships Matrix (Skill 2.29)")
     if os.path.exists("output/correlation_matrix.csv"):
-        df_corr = pd.read_csv("output/correlation_matrix.csv", index=True if 'Unnamed: 0' in pd.read_csv("output/correlation_matrix.csv").columns else None)
+        df_corr = pd.read_csv("output/correlation_matrix.csv", index_col=0)
         st.markdown("Calculated Pearson Correlation values for features:")
         st.dataframe(df_corr.round(3), use_container_width=True)
     else:
@@ -486,9 +528,7 @@ elif navigation == "📉 Drop-off Funnel Analysis":
         df_funnel = pd.read_csv("output/payment_funnel.csv")
         
         # Plotly Funnel Chart
-        fig_funnel = px.funnel(df_funnel, x='customers', y='stage', color='percentage',
-                               color_continuous_scale='Electric')
-        fig_funnel.update_layout(paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#c9d1d9'))
+        fig_funnel = plot_funnel_drop_off(df_funnel)
         st.plotly_chart(fig_funnel, use_container_width=True)
         
         # Display Drop-off rates
@@ -502,7 +542,6 @@ elif navigation == "📉 Drop-off Funnel Analysis":
             
         with col_f2:
             st.markdown("#### Identified Process Bottlenecks")
-            # locate max drop off
             max_drop = df_funnel.loc[df_funnel['drop_off_rate'].idxmax()] if df_funnel['drop_off_rate'].notna().any() else None
             if max_drop is not None:
                 st.markdown(f"""
@@ -533,28 +572,7 @@ elif navigation == "🚨 Risk & Anomaly Investigations":
         daily_rev['is_anomaly'] = (daily_rev['daily_total'] > daily_rev['upper']) | (daily_rev['daily_total'] < daily_rev['lower'])
         
         st.markdown("### 📈 Daily Revenue Anomaly Boundaries (Skill 2.36)")
-        fig_anom = ob.Figure()
-        fig_anom.add_trace(ob.Scatter(
-            x=daily_rev['date_only'], y=daily_rev['daily_total'],
-            mode='lines+markers', name='Daily Settled Revenue', line=dict(color='#58a6ff')
-        ))
-        fig_anom.add_trace(ob.Scatter(
-            x=daily_rev['date_only'], y=daily_rev['upper'],
-            mode='lines', name='Upper Boundary (Spike limit)', line=dict(color='#f85149', dash='dash')
-        ))
-        fig_anom.add_trace(ob.Scatter(
-            x=daily_rev['date_only'], y=daily_rev['lower'],
-            mode='lines', name='Lower Boundary (Dip limit)', line=dict(color='#d29922', dash='dash')
-        ))
-        
-        # Highlight anomalous days
-        anoms = daily_rev[daily_rev['is_anomaly']]
-        fig_anom.add_trace(ob.Scatter(
-            x=anoms['date_only'], y=anoms['daily_total'],
-            mode='markers', name='Flagged Anomalies', marker=dict(color='#ff7b72', size=10, symbol='x')
-        ))
-        
-        fig_anom.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#c9d1d9'))
+        fig_anom = plot_revenue_anomalies(daily_rev)
         st.plotly_chart(fig_anom, use_container_width=True)
         
     # Root Cause investigations toolkit (Skill 2.35)
@@ -584,7 +602,7 @@ elif navigation == "🚨 Risk & Anomaly Investigations":
 
 
 # Page 7: Transaction Ledger
-else:
+elif navigation == "📖 Transaction Ledger":
     st.markdown("<div class='section-header'>FinTech Payment Transaction Ledger</div>", unsafe_allow_html=True)
     
     st.markdown("### Complete Transaction Records")
@@ -611,7 +629,7 @@ else:
     st.markdown(f"Showing **{len(df_ledger):,}** records:")
     st.dataframe(df_ledger[existing_show_cols].head(100), use_container_width=True)
     
-    # Export csv capability
+    # Export csv capability (2.50)
     csv_data = df_ledger[existing_show_cols].head(500).to_csv(index=False)
     st.download_button(
         label="📥 Download current transaction view (CSV - Max 500 records)",
@@ -619,3 +637,279 @@ else:
         file_name="payment_ledger.csv",
         mime="text/csv"
     )
+
+
+# Page 8: SQL Database Analytics (2.37 - 2.44)
+elif navigation == "🗄️ SQL Database Analytics":
+    st.markdown("<div class='section-header'>🗄️ SQL Environment & Database Console</div>", unsafe_allow_html=True)
+    
+    st.markdown("""
+    Explore payment datasets directly using **SQL queries** executed against the integrated SQLite analytical database. 
+    This allows validation of business metrics (window functions, joins, groupings) with database-level indexes for optimal performance.
+    """)
+    
+    # Connection Check
+    if not os.path.exists(DB_PATH):
+        st.error("SQLite database file is missing. Ingest raw data first to initialize.")
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        
+        # Display list of Tables & Views
+        st.markdown("### Database Catalog Structure")
+        col_cat1, col_cat2 = st.columns(2)
+        with col_cat1:
+            st.markdown("**Available Tables:**")
+            st.write("- `transactions`: Raw and computed transactional payments ledger")
+            st.write("- `customers`: Customer segments, RFM counts, and CLV metrics")
+        with col_cat2:
+            st.markdown("**Pre-defined Aggregation Views (Skill 2.43):**")
+            st.write("- `v_daily_settlement_summary`: Daily volume, net amounts, and success ratios")
+            st.write("- `v_bank_performance_summary`: Acquiring banks metrics, total volume, and fees")
+            
+        # SQL Editor Query Selection
+        st.markdown("### Choose an Analytical Query Template")
+        predefined_queries = {
+            "Custom Query": "",
+            "Top 5 Customers by spend (Window RANK() - Skill 2.41)": 
+                "SELECT customer_id, segment, total_spend, RANK() OVER (ORDER BY total_spend DESC) as spend_rank FROM customers LIMIT 5;",
+            "Bank Fees aggregated summary (Grouping & Filtering - Skill 2.39)":
+                "SELECT bank_name, COUNT(*) as txn_count, SUM(calculated_fee) as total_fees FROM transactions WHERE final_status = 'Success' GROUP BY bank_name HAVING total_fees > 100000.0 ORDER BY total_fees DESC;",
+            "Segment CLV join metrics (Multi-Table Join - Skill 2.40)":
+                "SELECT c.segment, COUNT(t.transaction_id) as txn_count, AVG(t.amount) as avg_amount FROM transactions t INNER JOIN customers c ON t.customer_id = c.customer_id GROUP BY c.segment;"
+        }
+        query_sel = st.selectbox("Query Templates:", list(predefined_queries.keys()))
+        default_query = predefined_queries[query_sel]
+        
+        # SQL Editor Text Area
+        sql_input = st.text_area("Write/Edit SQL Query:", value=default_query if default_query else "SELECT * FROM v_bank_performance_summary LIMIT 10;", height=150)
+        
+        col_btn1, col_btn2 = st.columns(2)
+        
+        run_query = col_btn1.button("⚡ Execute Analytical SQL Query")
+        explain_query = col_btn2.button("🔍 Explain Query Optimisation (Skill 2.42)")
+        
+        # Execute query
+        if run_query:
+            try:
+                df_res = pd.read_sql_query(sql_input, conn)
+                st.markdown("#### Query Results:")
+                st.dataframe(df_res, use_container_width=True)
+                
+                # Update history session state
+                st.session_state['sql_history'].append(sql_input)
+            except Exception as e:
+                st.error(f"SQL Error: {e}")
+                
+        # Explain Query Plan
+        if explain_query:
+            try:
+                explain_sql = f"EXPLAIN QUERY PLAN {sql_input}"
+                df_exp = pd.read_sql_query(explain_sql, conn)
+                st.markdown("#### Query Optimisation Plan Details:")
+                st.dataframe(df_exp, use_container_width=True)
+                st.markdown("""
+                > [!TIP]
+                > The SQLite optimizer utilizes indexes such as `idx_txn_status` and `idx_txn_customer_id` to prevent scanning the entire table.
+                """)
+            except Exception as e:
+                st.error(f"Could not explain query optimization: {e}")
+                
+        # History
+        if st.session_state['sql_history']:
+            with st.expander("Show Query Execution History"):
+                for idx, h in enumerate(reversed(st.session_state['sql_history'])):
+                    st.code(h, language="sql")
+                    
+        conn.close()
+
+
+# Page 9: Data Intake & Ingestion (2.14, 2.15, 2.52, 2.58)
+elif navigation == "📤 Data Intake & Ingestion":
+    st.markdown("<div class='section-header'>📤 Raw Dataset Upload & Pipeline Ingestion</div>", unsafe_allow_html=True)
+    
+    st.markdown("""
+    Upload incoming transaction datasets (CSV or JSON format) to execute schema validations and automatically re-run the entire analytics pipeline.
+    """)
+    
+    uploaded_file = st.file_uploader("Choose a raw transaction file (CSV or JSON):", type=["csv", "json"])
+    
+    if uploaded_file is not None:
+        # Save uploaded file to raw folder
+        raw_target_path = os.path.join("data/raw", uploaded_file.name)
+        with open(raw_target_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        
+        st.success(f"File uploaded successfully and saved to: `{raw_target_path}`")
+        
+        # Load preview
+        st.markdown("### Dynamic Upload Preview")
+        try:
+            if uploaded_file.name.endswith(".csv"):
+                df_preview = pd.read_csv(raw_target_path, nrows=5)
+            else:
+                with open(raw_target_path, "r", encoding="utf-8") as f:
+                    js_data = json.load(f)
+                df_preview = pd.json_normalize(js_data).head(5)
+                
+            st.dataframe(df_preview, use_container_width=True)
+            st.write(f"Preview showing first {len(df_preview)} records.")
+        except Exception as e:
+            st.error(f"Failed to parse preview: {e}")
+            
+        # Run Intake checks live
+        st.markdown("### Intake Validation Assessment")
+        
+        # Run validation
+        file_size = os.path.getsize(raw_target_path)
+        is_csv = uploaded_file.name.endswith(".csv")
+        
+        col_chk1, col_chk2 = st.columns(2)
+        col_chk1.write(f"- File extension: `.{'csv' if is_csv else 'json'}` (Supported)")
+        col_chk1.write(f"- File size: `{file_size:,} bytes`")
+        
+        # Run subprocess for validation
+        if st.button("🚀 Trigger Complete Preprocessing & Database Pipeline (Skill 2.58)"):
+            st.markdown("### Execution Logs")
+            log_area = st.empty()
+            
+            env = os.environ.copy()
+            env["PYTHONIOENCODING"] = "utf-8"
+            
+            # Execute scripts sequentially
+            scripts = [
+                ("dataset_intake_validation.py", "scripts/dataset_intake_validation.py"),
+                ("data_ingestion.py", "scripts/data_ingestion.py"),
+                ("data_workflow.py", "scripts/data_workflow.py"),
+                ("db_integration.py", "scripts/db_integration.py")
+            ]
+            
+            full_log = ""
+            success = True
+            for name, path in scripts:
+                full_log += f"\n==================================================\nRUNNING {name}...\n==================================================\n"
+                log_area.code(full_log)
+                
+                res = subprocess.run(["python", path], capture_output=True, text=True, env=env)
+                full_log += res.stdout
+                if res.stderr:
+                    full_log += "\n[ERRORS / WARNINGS]:\n" + res.stderr
+                    
+                if res.returncode != 0:
+                    full_log += f"\n❌ Script {name} failed with code {res.returncode}\n"
+                    success = False
+                    break
+                else:
+                    full_log += f"\n✓ Script {name} completed successfully.\n"
+                    
+            log_area.code(full_log)
+            if success:
+                st.success("🎉 Preprocessing, Profiling, and SQL Database pipelines executed successfully! Re-loading datasets...")
+                # Clear streamlit cache
+                st.cache_data.clear()
+            else:
+                st.error("pipeline execution failed. Please verify error messages in the log above.")
+
+
+# Page 10: Executive Reports & Sharing (2.49, 2.50, 2.57)
+elif navigation == "📧 Executive Reports & Sharing":
+    st.markdown("<div class='section-header'>📧 Executive Reporting & Stakeholder Sharing</div>", unsafe_allow_html=True)
+    
+    st.markdown("""
+    Export ingestion profiles, data dictionaries, and summary reports, or simulate sending an automated email message to executive stakeholders.
+    """)
+    
+    # 2.50: Download reports
+    st.markdown("### 📤 Download Pipeline Artifacts")
+    col_dl1, col_dl2, col_dl3 = st.columns(3)
+    
+    # Data Dictionary
+    if os.path.exists("output/data_dictionary.csv"):
+        with open("output/data_dictionary.csv", "r", encoding="utf-8") as f:
+            dict_csv = f.read()
+        col_dl1.download_button("📘 Download Data Dictionary (CSV)", dict_csv, "data_dictionary.csv", "text/csv")
+    else:
+        col_dl1.warning("Data Dictionary CSV is missing.")
+        
+    # Dataset Profile
+    if os.path.exists("output/dataset_profile.csv"):
+        with open("output/dataset_profile.csv", "r", encoding="utf-8") as f:
+            prof_csv = f.read()
+        col_dl2.download_button("📊 Download Dataset Profile (CSV)", prof_csv, "dataset_profile.csv", "text/csv")
+    else:
+        col_dl2.warning("Dataset Profile CSV is missing.")
+        
+    # Intake validation
+    if os.path.exists("output/intake_validation_report.json"):
+        with open("output/intake_validation_report.json", "r", encoding="utf-8") as f:
+            intake_json = f.read()
+        col_dl3.download_button("📋 Download Intake Report (JSON)", intake_json, "intake_report.json", "application/json")
+    else:
+        col_dl3.warning("Intake Validation report is missing.")
+        
+    st.markdown("<hr>", unsafe_allow_html=True)
+    
+    # 2.49 & 2.57: Executive report storytelling and Email sharing
+    st.markdown("### 📧 Stakeholder Email Notification Engine")
+    
+    # Pre-calculated metric values to inject
+    total_volume = df_txn['amount'].sum()
+    success_rate = (df_txn['final_status'] == 'Success').sum() / len(df_txn) * 100
+    lost_revenue = df_txn['revenue_lost'].sum()
+    
+    default_body = f"""Hi Team,
+
+Here is the daily executive briefing for the Fintech Payment Retry Analysis dashboard.
+
+Operational Highlights:
+- Gross Transaction Volume Processed: ${total_volume:,.2f}
+- Transaction Success Rate: {success_rate:.2f}% (Target: 85.00%)
+- Permanently Lost Revenue leakage: ${lost_revenue:,.2f}
+
+The data pipelines have successfully completed execution. Database structures are updated.
+
+Regards,
+Fintech Analytics Platform Engine
+"""
+    
+    recipient = st.text_input("Recipient Email:", value="finance-alerts@fintech-platform.com")
+    subject = st.text_input("Subject:", value="💳 Fintech Payment Analytics Daily Executive Briefing")
+    email_body = st.text_area("Email Content:", value=default_body, height=200)
+    
+    if st.button("📧 Dispatch Simulated SMTP Email"):
+        with st.spinner("Initiating secure SMTP handshake..."):
+            import time
+            time.sleep(1)
+            
+            # Print mock SMTP handshake logs
+            st.markdown("#### Simulated SMTP Server Logs:")
+            smtp_logs = f"""Connecting to SMTP server at mail.fintech-platform.internal:587...
+220 SMTP Service Ready
+EHLO client.internal
+250-mail.fintech-platform.internal greets client
+250-AUTH LOGIN PLAIN
+250-STARTTLS
+250 HELP
+STARTTLS
+220 Ready to start TLS
+AUTH LOGIN
+334 VXNlcm5hbWU6
+334 UGFzc3dvcmQ6
+235 2.7.0 Authentication successful
+MAIL FROM:<no-reply@fintech-platform.com>
+250 2.1.0 Sender OK
+RCPT TO:<{recipient}>
+250 2.1.5 Recipient OK
+DATA
+354 Start mail input; end with <CR><LF>.<CR><LF>
+Subject: {subject}
+To: {recipient}
+From: no-reply@fintech-platform.com
+
+{email_body}
+.
+250 2.0.0 OK: Message accepted for delivery.
+QUIT
+221 2.0.0 closing connection"""
+            
+            st.markdown(f"<div class='smtp-terminal'>{smtp_logs.replace(chr(10), '<br>')}</div>", unsafe_allow_html=True)
+            st.success(f"Email successfully dispatched to: **{recipient}**")
